@@ -1,5 +1,6 @@
 using AutoMapper;
 using BookStore.API;
+using BookStore.API.Middleware;
 using BookStore.Core;
 using BookStore.Data;
 using BookStore.Data.Interface;
@@ -66,7 +67,7 @@ namespace BookStore
             app.UseHttpsRedirection();
 
             app.UseRouting();
-
+            app.UseMiddleware<ErrorHandlerMiddleware>();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

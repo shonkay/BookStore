@@ -35,14 +35,8 @@ namespace BookStore.Core
         {
             var model = await _unitOfWork.Book.GetByGuidId(Id);
             if (model == null)
-            {
-                return new ResponseModel
-                {
-                    ResponseData = null,
-                    ResponseCode = HttpStatusCode.OK,
-                    ResponseMessage = $"Found No Record With Id {Id}"
-                };
-            }
+                throw new Exception($"Found No Record With Id {Id}");
+           
             return new ResponseModel
             {
                 ResponseData = model,
@@ -55,6 +49,10 @@ namespace BookStore.Core
         {
             var model = await _unitOfWork.Book.GetAll();
             var response = model.Include(x => x.Category).Where(x => x.IsDeleted == false && x.IsFavorite == true);
+            
+            if(response == null)
+                throw new Exception($"Found No Record");
+
             return new ResponseModel
             {
                 ResponseData = response,
@@ -81,20 +79,11 @@ namespace BookStore.Core
         {
             var book = await _unitOfWork.Book.GetByGuidId(Id);
             if(book == null)
-                return new ResponseModel
-                {
-                    ResponseData = null,
-                    ResponseCode = HttpStatusCode.BadRequest,
-                    ResponseMessage = $"Found No Record With Id {Id}"
-                };
-            if(book.Status == "Borrowed")
-                return new ResponseModel
-                {
-                    ResponseData = null,
-                    ResponseCode = HttpStatusCode.BadRequest,
-                    ResponseMessage = $"Book With Id {Id} Is Currently Not Available"
-                };
+                throw new Exception($"Found No Record");
 
+            if (book.Status == "Borrowed")
+                throw new Exception($"Book With Id {Id} Is Currently Not Available");
+            
             book.Status = "Borrowed";
             book.BorrowedCount += 1;
             book.ModifiedDate = DateTime.Now;
@@ -116,14 +105,8 @@ namespace BookStore.Core
         {
             var category = await _unitOfWork.Category.GetByGuidId(Id);
             if (category == null)
-            {
-                return new ResponseModel
-                {
-                    ResponseData = null,
-                    ResponseCode = HttpStatusCode.BadRequest,
-                    ResponseMessage = $"Found No Record With Id {Id}"
-                };
-            }
+                throw new Exception($"Book With Id {Id} Is Currently Not Available");
+
 
             category.IsDeleted = true;
 
@@ -144,20 +127,12 @@ namespace BookStore.Core
             var existing = await _unitOfWork.Book.GetByName(input.BookName);
 
             if (existing != null)
-                return new ResponseModel
-                {
-                    ResponseCode = HttpStatusCode.BadRequest,
-                    ResponseData = existing,
-                    ResponseMessage = "Book already exists"
-                };
+                throw new Exception($"Book already exists");
+            
             var catogory = _unitOfWork.Category.GetByGuidId(input.CategoryId);
             if(catogory == null)
-                return new ResponseModel
-                {
-                    ResponseCode = HttpStatusCode.BadRequest,
-                    ResponseData = catogory,
-                    ResponseMessage = $"No Book Category Found with {input.CategoryId}"
-                };
+                throw new Exception($"No Book Category Found with {input.CategoryId}");
+
 
             book.Id = Guid.NewGuid();
             book.CategoryId = input.CategoryId;
@@ -182,20 +157,11 @@ namespace BookStore.Core
         {
             var book = await _unitOfWork.Book.GetByGuidId(input.BookId);
             if (book == null)
-                return new ResponseModel
-                {
-                    ResponseCode = HttpStatusCode.BadRequest,
-                    ResponseData = null,
-                    ResponseMessage = "Book already exists"
-                };
+                throw new Exception("Book does not exists");
+           
             var catogory = _unitOfWork.Category.GetByGuidId(input.CategoryId);
             if (catogory == null)
-                return new ResponseModel
-                {
-                    ResponseCode = HttpStatusCode.BadRequest,
-                    ResponseData = catogory,
-                    ResponseMessage = $"No Book Category Found with {input.CategoryId}"
-                };
+                throw new Exception($"No Book Category Found with {input.CategoryId}");
 
             book.Name = input.BookName ?? book.Name;
             book.Status = input.Status ?? book.Status;
